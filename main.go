@@ -73,10 +73,12 @@ func scrape(url string) []Quote {
 }
 
 func tweet(quote Quote) {
-	envErr := godotenv.Load(".env")
-	if envErr != nil {
-		fmt.Println("Could not load .env file")
-		os.Exit(1)
+	if os.Getenv("DYNO") == "" {
+		envErr := godotenv.Load(".env")
+		if envErr != nil {
+			fmt.Println("Could not load .env file")
+			os.Exit(1)
+		}
 	}
 	config := Credentials{
 		api_key:             os.Getenv("API_KEY"),
