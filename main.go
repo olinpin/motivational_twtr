@@ -28,7 +28,7 @@ type Credentials struct {
 }
 
 func main() {
-	if time.Now().Hour()%4 == 0 {
+	if time.Now().Hour()%4 == 0 || time.Now().Hour() == 0 {
 		run()
 	}
 }
