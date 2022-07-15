@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -13,8 +16,8 @@ import (
 var url = "https://www.brainyquote.com/quote_of_the_day"
 
 type Quote struct {
-	text   string
-	author string
+	Text   string
+	Author string
 }
 
 type Credentials struct {
@@ -25,8 +28,29 @@ type Credentials struct {
 }
 
 func main() {
-	quotes := scrape(url)
-	tweet(quotes)
+	if time.Now().Hour()%4 == 0 {
+		run()
+	}
+}
+
+func run() {
+	var quotes []Quote
+
+	jsonFile, err := os.Open("quotes.json")
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(byteValue, &quotes)
+	if err != nil {
+		quotes = scrape(url)
+	}
+	// assign quote to a variable
+	length := len(quotes)
+	quote := quotes[0]
+	// delete quote from quotes
+	quotes[0] = quotes[length-1]
+	quotes = quotes[:length-1]
+	tweet(quote)
+	file, _ := json.MarshalIndent(quotes, "", " ")
+	_ = ioutil.WriteFile("quotes.json", file, 0644)
 }
 
 func scrape(url string) []Quote {
@@ -40,7 +64,7 @@ func scrape(url string) []Quote {
 	c.OnHTML("body main div:nth-of-type(1).qotd-wrapper-cntr", func(e *colly.HTMLElement) {
 		text := e.ChildText("div div.grid-item a:nth-of-type(1) div")
 		author := e.ChildText("div div.grid-item a:nth-of-type(2)")
-		quotes = append(quotes, Quote{text, author})
+		quotes = append(quotes, Quote{Text: text, Author: author})
 	})
 
 	c.Visit(url)
@@ -48,7 +72,7 @@ func scrape(url string) []Quote {
 	return quotes
 }
 
-func tweet(quotes []Quote) {
+func tweet(quote Quote) {
 	envErr := godotenv.Load(".env")
 	if envErr != nil {
 		fmt.Println("Could not load .env file")
@@ -64,14 +88,12 @@ func tweet(quotes []Quote) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	for _, quote := range quotes {
-		text := quote.text + "\n\n - " + quote.author
-		tweet, _, err := client.Statuses.Update(text, nil)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println(tweet)
+	text := quote.Text + "\n\n - " + quote.Author
+	tweet, _, err := client.Statuses.Update(text, nil)
+	if err != nil {
+		fmt.Println(err)
 	}
+	fmt.Println(tweet)
 }
 
 func Twitter(creds *Credentials) (*twitter.Client, error) {
