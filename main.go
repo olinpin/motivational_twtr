@@ -48,9 +48,9 @@ func run() {
 	// delete quote from quotes
 	quotes[0] = quotes[length-1]
 	quotes = quotes[:length-1]
-	tweet(quote)
 	file, _ := json.MarshalIndent(quotes, "", " ")
 	_ = ioutil.WriteFile("quotes.json", file, 0644)
+	tweet(quote)
 }
 
 func scrape(url string) []Quote {
@@ -91,11 +91,14 @@ func tweet(quote Quote) {
 		fmt.Println(err)
 	}
 	text := quote.Text + "\n\n - " + quote.Author
-	tweet, _, err := client.Statuses.Update(text, nil)
+	_, _, err = client.Statuses.Update(text, nil)
 	if err != nil {
 		fmt.Println(err)
+		if string(err.Error()) == "twitter: 187 Status is a duplicate." {
+			run()
+		}
 	}
-	fmt.Println(tweet)
+	fmt.Println(text)
 }
 
 func Twitter(creds *Credentials) (*twitter.Client, error) {
