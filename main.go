@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"time"
 
@@ -15,9 +16,23 @@ import (
 
 var url = "https://www.brainyquote.com/quote_of_the_day"
 
+var hashtags = []string{
+	"#MondayMotivation",
+	"#Motivation",
+	"#inspiration",
+	"#quote",
+	"#life",
+	"#quoteoftheday",
+	"#quotes",
+	"#quotesoftheday",
+	"quotesdaily",
+	"quotestoliveby",
+}
+
 type Quote struct {
-	Text   string
-	Author string
+	Text     string
+	Author   string
+	Hashtags string
 }
 
 type Credentials struct {
@@ -28,7 +43,7 @@ type Credentials struct {
 }
 
 func main() {
-	if time.Now().Hour()%4 == 2 {
+	if time.Now().Hour()%4 == 3 {
 		fmt.Print("running")
 		run()
 	} else {
@@ -64,10 +79,12 @@ func scrape(url string) []Quote {
 		fmt.Println("Visiting", request.URL)
 	})
 	// /html/body/main/div[1]/div[3]/div/div/a[1]/div
+	hashtags := chooseHashtags(3)
 	c.OnHTML("body main div:nth-of-type(1).qotd-wrapper-cntr", func(e *colly.HTMLElement) {
 		text := e.ChildText("div div.grid-item a:nth-of-type(1) div")
 		author := e.ChildText("div div.grid-item a:nth-of-type(2)")
-		quotes = append(quotes, Quote{Text: text, Author: author})
+		hashtag_str := hashtags[0] + " " + hashtags[1] + " " + hashtags[2]
+		quotes = append(quotes, Quote{Text: text, Author: author, Hashtags: hashtag_str})
 	})
 
 	c.Visit(url)
@@ -93,7 +110,7 @@ func tweet(quote Quote) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	text := quote.Text + "\n\n - " + quote.Author
+	text := quote.Text + "\n\n - " + quote.Author + "\n" + quote.Hashtags
 	_, _, err = client.Statuses.Update(text, nil)
 	if err != nil {
 		fmt.Println(err)
@@ -121,4 +138,33 @@ func Twitter(creds *Credentials) (*twitter.Client, error) {
 	}
 	fmt.Println("user:", user)
 	return client, nil
+}
+
+func chooseHashtags(length int) []string {
+	var hashtags = []string{
+		"#MondayMotivation",
+		"#Motivation",
+		"#inspiration",
+		"#quote",
+		"#life",
+		"#quoteoftheday",
+		"#quotes",
+		"#quotesoftheday",
+		"quotesdaily",
+		"quotestoliveby",
+	}
+	hastag_result := []string{}
+	iterators := []int{}
+	for i := 0; i < length; i++ {
+		// first_hashtag = hashtags[rand.Intn(len(hashtags))]
+		iterator1 := rand.Intn(len(hashtags) - 1)
+		for _, b := range iterators {
+			if iterator1 == b {
+				iterator1 = rand.Intn(len(hashtags) - 1)
+			}
+		}
+		iterators = append(iterators, iterator1)
+		hastag_result = append(hastag_result, hashtags[iterator1])
+	}
+	return hastag_result
 }
