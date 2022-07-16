@@ -43,7 +43,7 @@ type Credentials struct {
 }
 
 func main() {
-	if time.Now().Hour()%4 == 3 {
+	if time.Now().Hour()%4 == 2 {
 		fmt.Print("running")
 		run()
 	} else {
