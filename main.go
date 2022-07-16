@@ -108,7 +108,7 @@ func tweet(quote Quote) {
 	Time, _ := time.Parse("Mon Jan 2 15:04:05 +0000 2006", old_tweets[0].CreatedAt)
 	loc, _ := time.LoadLocation("UTC")
 	// check if it's been 4 hours from last tweet
-	if Time.Hour()-time.Now().In(loc).Hour() >= 4 {
+	if time.Now().In(loc).Hour()-Time.Hour() >= 4 || time.Now().In(loc).Hour()-Time.Hour() == -20 {
 		// check if tweet already exists in the last 10 tweets
 		for _, tweet := range old_tweets {
 			if strings.Contains(tweet.Text, text) {
