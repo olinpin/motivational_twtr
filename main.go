@@ -105,18 +105,21 @@ func tweet(quote Quote) {
 		Count:      10,
 	})
 	text := quote.Text + "\n\n - " + quote.Author
-	// check if tweet already exists in the last 10 tweets
-	for _, tweet := range old_tweets {
-		Time, _ := time.Parse("Mon Jan 2 15:04:05 +0000 2006", old_tweets[0].CreatedAt)
-		if Time.Hour() == time.Now().Hour()+4 {
+	Time, _ := time.Parse("Mon Jan 2 15:04:05 +0000 2006", old_tweets[0].CreatedAt)
+	loc, _ := time.LoadLocation("UTC")
+	// check if it's been 4 hours from last tweet
+	if Time.Hour()-time.Now().In(loc).Hour() >= 4 {
+		// check if tweet already exists in the last 10 tweets
+		for _, tweet := range old_tweets {
 			if strings.Contains(tweet.Text, text) {
 				fmt.Println("Already tweeted")
 				run()
 				return
 			}
-		} else {
-			return
 		}
+	} else {
+		fmt.Println("Not 4 hours yet")
+		return
 	}
 	hashs := "\n" + quote.Hashtags
 	text = text + hashs
