@@ -150,8 +150,10 @@ func Twitter(creds *Credentials) (*twitter.Client, error) {
 
 func chooseHashtags(length int) []string {
 	var hashtags = []string{
-		"#MondayMotivation",
-		"#Motivation",
+		"#motivation",
+		"#belief",
+		"#inspirationalQuote",
+		"#inspirationalQuotes",
 		"#inspiration",
 		"#quote",
 		"#life",
@@ -160,11 +162,27 @@ func chooseHashtags(length int) []string {
 		"#quotesoftheday",
 		"#quotesdaily",
 		"#quotestoliveby",
+		"#dailyquotes",
+		"#selfimprovement",
+		"#health",
+		"#wisdom",
+		"#mindset",
+		"#success",
+		"#lifestyle",
+		"#gratitude",
+		"#goals",
+		"#selflove",
+		"#positivevibes",
+		"#yourself",
+		"#selfworth",
+		"#selfesteem",
+	}
+	if time.Now().Weekday() == time.Monday {
+		hashtags = append(hashtags, "#MondayMotivation")
 	}
 	hastag_result := []string{}
 	iterators := []int{}
 	for i := 0; i < length; i++ {
-		// first_hashtag = hashtags[rand.Intn(len(hashtags))]
 		iterator1 := rand.Intn(len(hashtags) - 1)
 		for _, b := range iterators {
 			if iterator1 == b {
