@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
@@ -15,19 +16,6 @@ import (
 )
 
 var url = "https://www.brainyquote.com/quote_of_the_day"
-
-var hashtags = []string{
-	"#MondayMotivation",
-	"#Motivation",
-	"#inspiration",
-	"#quote",
-	"#life",
-	"#quoteoftheday",
-	"#quotes",
-	"#quotesoftheday",
-	"quotesdaily",
-	"quotestoliveby",
-}
 
 type Quote struct {
 	Text     string
@@ -57,7 +45,8 @@ func run() {
 	jsonFile, err := os.Open("quotes.json")
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal(byteValue, &quotes)
-	if err != nil {
+	if err != nil || len(quotes) == 0 {
+		fmt.Println("No json file or length of quotes is 0")
 		quotes = scrape(url)
 	}
 	// assign quote to a variable
@@ -110,13 +99,30 @@ func tweet(quote Quote) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	text := quote.Text + "\n\n - " + quote.Author + "\n" + quote.Hashtags
+	// get last 10 tweets
+	old_tweets, _, _ := client.Timelines.UserTimeline(&twitter.UserTimelineParams{
+		ScreenName: "QuoteMotiv1",
+		Count:      10,
+	})
+	text := quote.Text + "\n\n - " + quote.Author
+	// check if tweet already exists in the last 10 tweets
+	for _, tweet := range old_tweets {
+		Time, _ := time.Parse("Mon Jan 2 15:04:05 +0000 2006", old_tweets[0].CreatedAt)
+		if Time.Hour() == time.Now().Hour()+4 {
+			if strings.Contains(tweet.Text, text) {
+				fmt.Println("Already tweeted")
+				run()
+				return
+			}
+		} else {
+			return
+		}
+	}
+	hashs := "\n" + quote.Hashtags
+	text = text + hashs
 	_, _, err = client.Statuses.Update(text, nil)
 	if err != nil {
 		fmt.Println(err)
-		if string(err.Error()) == "twitter: 187 Status is a duplicate." {
-			run()
-		}
 	}
 	fmt.Println(text)
 }
@@ -132,11 +138,10 @@ func Twitter(creds *Credentials) (*twitter.Client, error) {
 		SkipStatus:   twitter.Bool(true),
 		IncludeEmail: twitter.Bool(true),
 	}
-	user, _, err := client.Accounts.VerifyCredentials(verifyParams)
+	_, _, err := client.Accounts.VerifyCredentials(verifyParams)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("user:", user)
 	return client, nil
 }
 
@@ -150,8 +155,8 @@ func chooseHashtags(length int) []string {
 		"#quoteoftheday",
 		"#quotes",
 		"#quotesoftheday",
-		"quotesdaily",
-		"quotestoliveby",
+		"#quotesdaily",
+		"#quotestoliveby",
 	}
 	hastag_result := []string{}
 	iterators := []int{}
