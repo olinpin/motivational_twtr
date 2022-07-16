@@ -31,6 +31,8 @@ func main() {
 	if time.Now().Hour()%4 == 2 {
 		fmt.Print("running")
 		run()
+	} else {
+		fmt.Print("Not running rn")
 	}
 }
 
